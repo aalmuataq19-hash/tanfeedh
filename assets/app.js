@@ -1,4 +1,4 @@
-/* مدارسة نظام التنفيذ ولائحته التنفيذية — منطق الموقع
+/* مدارسة نظام التنفيذ ولائحته التنفيذية: منطق الموقع
    البيانات في مجلد data، ولا تحتاج الواجهة إلى إعادة بناء عند إضافة شرح جديد. */
 (function () {
   'use strict';
@@ -163,17 +163,17 @@
       '<div class="eyebrow">نظام التنفيذ الصادر بالمرسوم الملكي (م/237) ولائحته التنفيذية</div>' +
       '<h1>مدارسة نظام التنفيذ ولائحته التنفيذية</h1>' +
       '<p>مادة علمية للمدارسة بين القضاة والممارسين: نص كل مادة كاملًا مع ما يتصل بها من اللائحة، ثم شرحها، وما استجد فيها، وربطها بمواد النظام والأنظمة ذات الصلة، وتطبيقاتها ومسائلها مع أجوبتها.</p>' +
-      '<div class="meta-row"><span>بدء العمل بالنظام واللائحة: <b>1448/5/17هـ</b> الموافق <b>2026/10/28م</b></span><span><b>65</b> مادة نظامية و<b>54</b> مادة لائحية</span></div>' +
+      '<div class="meta-row"><span>يُعمل بالنظام واللائحة بعد مضي <b>180</b> يومًا من نشر النظام في <b>1447/11/14هـ</b> (<a href="#/instruments/nafath">بيان تاريخ النفاذ</a>)</span><span><b>65</b> مادة نظامية و<b>54</b> مادة لائحية</span></div>' +
       '<div class="btn-row">' +
-      (ready.length ? '<a class="btn primary" href="' + lawHref(ready[0]) + '">ابدأ بالمادة (' + ready[0] + ') — نموذج مكتمل</a>' : '') +
+      (ready.length ? '<a class="btn primary" href="' + lawHref(ready[0]) + '">ابدأ بالمادة (' + ready[0] + '): نموذج مكتمل</a>' : '') +
       '<a class="btn" href="' + lawHref(1) + '">من المادة الأولى</a>' +
       '<a class="btn" href="#/about">منهجية المدارسة</a>' +
       '</div></section>';
     h += '<h2 class="section-title">أبواب النظام</h2><div class="parts">';
     D.parts.forEach(function (p, i) {
       var nums = []; p.chapters.forEach(function (c) { nums = nums.concat(c.articles); });
-      h += '<details class="part-row"><summary><span class="part-badge">' + (i + 1) + '</span><span class="part-text"><b>' + esc(p.label) + ': ' + esc(p.name) + '</b><span>المواد (' + nums[0] + ' – ' + nums[nums.length - 1] + ')' +
-        (p.chapters.length > 1 ? ' • ' + p.chapters.length + ' فصلًا' : '') + '</span></span>' + I.chev + '</summary><div class="part-body">';
+      h += '<details class="part-row"><summary><span class="part-badge">' + (i + 1) + '</span><span class="part-text"><b>' + esc(p.label) + ': ' + esc(p.name) + '</b><span>المواد من ' + nums[0] + ' إلى ' + nums[nums.length - 1] +
+        (p.chapters.length > 1 ? '، في ' + p.chapters.length + ' فصلًا' : '') + '</span></span>' + I.chev + '</summary><div class="part-body">';
       p.chapters.forEach(function (c) {
         if (c.label) h += '<div class="toc-chapter">' + esc(c.label) + ': ' + esc(c.name) + '</div>';
         h += '<ul class="grid-articles">' + c.articles.map(tocItem).join('') + '</ul>';
@@ -199,7 +199,7 @@
   }
   function regCard(r) {
     return '<article class="textcard reg" id="r' + r.n + '"><div class="tc-head"><span class="tc-label">نص اللائحة</span>' +
-      '<span class="tc-name">اللائحة التنفيذية — المادة ' + esc(r.ord) + ' (' + r.n + ')</span>' +
+      '<span class="tc-name">اللائحة التنفيذية: المادة ' + esc(r.ord) + ' (' + r.n + ')</span>' +
       '<span class="tc-src">النسخة المنسقة، ص' + r.page + '</span>' +
       '<span class="tc-tools"><button class="icon-btn" data-copy-reg="' + r.n + '" aria-label="نسخ نص المادة اللائحية">' + I.copy + '</button></span></div>' +
       '<div class="official">' + officialHTML(r.paras) + '</div></article>';
@@ -215,8 +215,8 @@
   }
   function refText(ref) {
     var k = ref.split(':')[0], v = ref.slice(k.length + 1);
-    if (k === 'م' && D.lawBy[v]) return { kind: 'law', obj: D.lawBy[v], href: lawHref(v), src: 'نظام التنفيذ — النسخة المنسقة، ص' + D.lawBy[v].page };
-    if (k === 'ل' && D.regBy[v]) return { kind: 'reg', obj: D.regBy[v], href: regHref(+v), src: 'اللائحة التنفيذية — النسخة المنسقة، ص' + D.regBy[v].page };
+    if (k === 'م' && D.lawBy[v]) return { kind: 'law', obj: D.lawBy[v], href: lawHref(v), src: 'نظام التنفيذ، النسخة المنسقة، ص' + D.lawBy[v].page };
+    if (k === 'ل' && D.regBy[v]) return { kind: 'reg', obj: D.regBy[v], href: regHref(+v), src: 'اللائحة التنفيذية، النسخة المنسقة، ص' + D.regBy[v].page };
     if (k === 'مرسوم') {
       var dec = D.instruments.filter(function (x) { return x.id === 'decree'; })[0];
       var b = dec && dec.blocks.filter(function (x) { return x.text.indexOf(v + ':') === 0; })[0];
@@ -243,7 +243,7 @@
       var extLink = R.url ? '<a class="lc-ext" href="' + esc(R.url) + '" target="_blank" rel="noopener">موقع هيئة الخبراء بمجلس الوزراء ' + I.out.replace('<svg', '<svg style="width:13px;height:13px;vertical-align:-2px"') + '</a>' : '';
       if (R.paras && R.paras.length) {
         h += '<div class="lc-part"><span class="lc-label">النص</span><div class="lc-text official">' + R.paras.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') + '</div>' +
-          '<span class="cite" style="margin-top:4px">' + (R.src ? esc(R.src) : '') + (R.src && extLink ? ' — ' : '') + extLink + '</span></div>';
+          (R.src ? '<span class="cite" style="margin-top:4px">' + esc(R.src) + '</span>' : '') + (extLink ? '<span class="cite" style="margin-top:2px">' + extLink + '</span>' : '') + '</div>';
       }
       if (L.commentary && L.commentary.length) {
         /* الاقتباس حرفي كما في ملف الوورد، بين علامتي التنصيص دون تعديل */
@@ -304,7 +304,7 @@
     if (!a) return viewNotFound();
     CTX = n;
     var st = D.studies[n];
-    var h = '<div class="print-head">' + SITE + ' — المادة (' + n + ')</div>';
+    var h = '<div class="print-head">' + SITE + ': المادة (' + n + ')</div>';
     h += crumbs(a);
     h += '<header class="art-head"><div class="art-kicker"><span class="art-no">المادة (' + n + ')</span><span class="art-ord">المادة ' + esc(a.ord) + '</span>' +
       '<span class="status' + (st ? ' ready' : '') + '">' + (st ? 'مادة علمية مكتملة' : 'النص فقط') + '</span></div>' +
@@ -333,17 +333,21 @@
       (prev ? '<a href="' + lawHref(prev.n) + '"><span class="pl">' + I.prev + 'المادة السابقة (' + prev.n + ')</span><span class="pt">' + esc(prev.title) + '</span></a>' : '<span class="disabled"></span>') +
       (next ? '<a class="next" href="' + lawHref(next.n) + '"><span class="pl">المادة التالية (' + next.n + ')' + I.next + '</span><span class="pt">' + esc(next.title) + '</span></a>' : '<span class="disabled"></span>') +
       '</nav>';
-    return { title: 'المادة (' + n + '): ' + a.title + ' — ' + SITE, html: h, label: 'المادة (' + n + ')' };
+    return { title: 'المادة (' + n + '): ' + a.title + ' - ' + SITE, html: h, label: 'المادة (' + n + ')' };
   }
 
   function viewInstruments() {
-    var h = '<div class="doc"><div class="eyebrow">أداة الإصدار والنفاذ</div><h1>المرسوم الملكي وقرار مجلس الوزراء وقرار إصدار اللائحة</h1>' +
-      '<p>نصوص أداة إصدار النظام ولائحته كما وردت في النسخة المنسقة، وفيها الأحكام الانتقالية المؤثرة في تطبيق النظام. ويُعمل بالنظام ولائحته من 1448/5/17هـ الموافق 2026/10/28م.</p></div>';
+    var h = '<div class="doc"><div class="eyebrow">أداة الإصدار والنفاذ</div><h1>المرسوم الملكي وقرار مجلس الوزراء وقرار إصدار اللائحة وتعميمها</h1>' +
+      '<p>نصوص أداة إصدار النظام ولائحته، وفيها الأحكام الانتقالية المؤثرة في تطبيق النظام.</p></div>';
+    h += '<article class="textcard note" id="nafath"><div class="tc-head"><span class="tc-label">تنبيه</span><span class="tc-name">تاريخ العمل بالنظام واللائحة</span></div><div class="official-note">' +
+      '<p>نصت ' + '<a class="xref" data-int="1" href="#/article/65">الفقرة (2) من المادة (65)</a>' + ' على أن يُعمل بالنظام «بعد مضي (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية»، ونصت ' + '<a class="xref" data-int="1" href="' + regHref(54) + '">المادة (54) من اللائحة</a>' + ' على أن يُعمل باللائحة من تاريخ العمل بالنظام. وقد نُشر النظام في جريدة أم القرى في 1447/11/14هـ الموافق 2026/5/1م (مذكرة الفروق، ص5).</p>' +
+      '<p>وذكرت النسخة المنسقة ومذكرة الفروق أن العمل به من 1448/5/17هـ الموافق 2026/10/28م. وعلى طريقة وزارة العدل في احتساب نفاذ نظام المعاملات المدنية -إذ جعلت بدء سريانه اليوم التالي لمضي المدة كاملة بعد يوم النشر- يكون أول يوم للعمل بالنظام 1448/5/18هـ الموافق 2026/10/29م (وزارة العدل، شرح نظام المعاملات المدنية، ج4، شرح المادة (721)، ص289 (تقريبي)). ونقلت الصحف عن بيان الوزارة عند إقرار اللائحة أن العمل يبدأ في 29 أكتوبر 2026م.</p>' +
+      '<p class="cite">المقابلة بين التاريخين الهجري والميلادي بتقويم أم القرى.</p></div></article>';
     D.instruments.forEach(function (ins) {
-      h += '<article class="textcard decree" id="' + ins.id + '"><div class="tc-head"><span class="tc-label">' + esc(ins.label) + '</span><span class="tc-name">' + esc(ins.title) + '</span><span class="tc-src">النسخة المنسقة، ص' + ins.blocks[0].page + '</span></div><div class="official">' +
+      h += '<article class="textcard decree" id="' + ins.id + '"><div class="tc-head"><span class="tc-label">' + esc(ins.label) + '</span><span class="tc-name">' + esc(ins.title) + '</span><span class="tc-src">' + esc(ins.src || ('النسخة المنسقة، ص' + ins.blocks[0].page)) + '</span></div><div class="official">' +
         ins.blocks.map(function (b) { return b.type === 'head' ? '<p><strong>' + linkifyOfficial(esc(b.text)) + '</strong></p>' : '<p>' + linkifyOfficial(esc(b.text)) + '</p>'; }).join('') + '</div></article>';
     });
-    return { title: 'أداة الإصدار والنفاذ — ' + SITE, html: h, label: 'أداة الإصدار' };
+    return { title: 'أداة الإصدار والنفاذ - ' + SITE, html: h, label: 'أداة الإصدار' };
   }
 
   function viewAbout() {
@@ -380,14 +384,16 @@
       rels.map(function (r) { return '<tr><td><b>' + r[0] + '</b></td><td>' + r[1] + '</td></tr>'; }).join('') + '</tbody></table></div>' +
       '<h2>أنواع الأسئلة</h2><div class="card"><ul class="refs" style="font-size:16px"><li><b>فهم:</b> جوابه صريح في النص، ويُذكر معه رقم المادة.</li><li><b>تطبيق:</b> واقعة قصيرة، ويظهر حلها مع التعليل.</li><li><b>مدارسة:</b> مسألة محل نظر، تُعرض فيها الآراء ووجه كل منها، ثم رأي مقترح موسوم بأنه اجتهاد، وخانة لما ينتهي إليه المجلس.</li></ul></div>' +
       '<h2>المصادر وطريقة الإحالة</h2><div class="card"><ul class="refs" style="font-size:16px">' +
-      '<li>نصوص النظام واللائحة وأداة الإصدار منقولة حرفيًّا من النسخة المنسقة (تنسيق: د. يونس بن سليمان الصالح)، ويُذكر رقم صفحتها عند كل نص. ويُرجع في الاستشهاد الرسمي إلى النشر في جريدة أم القرى وموقع <a href="' + esc((D.laws.enforcement || {}).url || '#') + '" target="_blank" rel="noopener">هيئة الخبراء بمجلس الوزراء</a>.</li>' +
+      '<li>نصوص النظام وأداة إصداره منقولة حرفيًّا من النسخة المنسقة (تنسيق: د. يونس بن سليمان الصالح)، ويُذكر رقم صفحتها عند كل نص، وقد طوبقت بنسخة الوورد منها.</li>' +
+      '<li>نصوص اللائحة طوبقت كلمةً كلمة بالصورة الرسمية المرفقة بتعميم وزارة العدل رقم (13/ت/10055) وتاريخ 1448/5/11هـ، وصُحح ما خالفها.</li>' +
+      '<li>يُرجع في الاستشهاد الرسمي إلى النشر في جريدة أم القرى، وإلى <a href="' + esc((D.laws.enforcement || {}).url || '#') + '" target="_blank" rel="noopener">صفحة النظام في موقع وزارة العدل</a>.</li>' +
       '<li>نصوص نظام المعاملات المدنية منقولة من شرح وزارة العدل، والاقتباس منه حرفي بين علامتي التنصيص « »، بصيغة: وزارة العدل، شرح نظام المعاملات المدنية، ج[الجزء]، شرح المادة ([رقمها])، ص[الصفحة]، بعد التحقق من رقم الصفحة في النسخة المصورة.</li>' +
       '<li>يُفصل دائمًا بين نص المادة، وشرح الوزارة، وتعليق المدارسة.</li>' +
       '<li>ما لم تتم مطابقة نصه لا يُذكر رقمه، ويُشار إليه بوصفه موضعًا للبحث.</li></ul></div>' +
       '<h2>حالة الإعداد</h2><div class="card"><p style="margin:0">المواد التي اكتملت مادتها العلمية: ' +
       Object.keys(D.studies).map(function (n) { return '<a class="xref" data-int="1" href="' + lawHref(n) + '">المادة (' + n + ')</a>'; }).join('، ') +
       '. وبقية المواد يظهر فيها النص الرسمي وما يتصل به من اللائحة إلى حين إعداد مادتها العلمية.</p></div></div>';
-    return { title: 'منهجية المدارسة — ' + SITE, html: h, label: 'منهجية المدارسة' };
+    return { title: 'منهجية المدارسة - ' + SITE, html: h, label: 'منهجية المدارسة' };
   }
   function viewNotFound() {
     return { title: SITE, html: '<div class="empty-note"><b>الصفحة غير موجودة.</b><br>تأكد من الرابط، أو انتقل إلى <a href="#/">الصفحة الرئيسية</a>.</div>' };
@@ -501,10 +507,10 @@
   }
   function articleLink(n) { return location.href.split('#')[0] + '#/article/' + n; }
   function plainArticle(a) {
-    return 'نظام التنفيذ — المادة ' + a.ord + ' (' + a.n + ')\n' + a.paras.join('\n') + '\n' + articleLink(a.n);
+    return 'نظام التنفيذ، المادة ' + a.ord + ' (' + a.n + ')\n' + a.paras.join('\n') + '\n' + articleLink(a.n);
   }
   function plainReg(r) {
-    return 'اللائحة التنفيذية لنظام التنفيذ — المادة ' + r.ord + ' (' + r.n + ')\n' + r.paras.join('\n');
+    return 'اللائحة التنفيذية لنظام التنفيذ، المادة ' + r.ord + ' (' + r.n + ')\n' + r.paras.join('\n');
   }
   var FS = [16, 17, 18, 19, 20, 21, 22, 24];
   function currentFs() {
@@ -587,14 +593,14 @@
     var push = function (anchor, where, text) { out.push({ anchor: anchor, where: where, text: text.replace(/\{\{[^:]+:[^|}]+\|([^}]+)\}\}/g, '$1').replace(/\{\{(م|ل):(\d+)\}\}/g, function (m, k, d) { return k === 'م' ? 'المادة (' + d + ')' : 'المادة (' + d + ') من اللائحة'; }).replace(/\{\{ر:([^}]+)\}\}/g, function (m, id) { return D.refs[id] ? D.refs[id].label : ''; }).replace(/\{\{س:[^}]+\}\}/g, '').replace(/\*\*/g, '') }); };
     st.sections.forEach(function (s) {
       var where = s.title, anc = 'sec-' + s.id;
-      if (s.blocks) s.blocks.forEach(function (b) { push(anc, where, [b.h, b.x].concat(b.items || []).filter(Boolean).join(' — ')); });
-      if (s.internal) s.internal.forEach(function (L) { push(anc, where, [L.label, L.rel, L.why, L.effect].join(' — ')); });
-      if (s.external) s.external.forEach(function (L) { var R = D.refs[L.ref] || {}; push('ref-' + L.ref, where, [R.label, L.rel, (R.paras || []).join(' '), L.why, L.effect, (L.commentary || []).map(function (c) { return c.q; }).join(' ')].join(' — ')); });
-      if (s.cases) s.cases.forEach(function (c) { push(anc, where, [c.h, c.facts, c.steps.join(' '), c.result].join(' — ')); });
+      if (s.blocks) s.blocks.forEach(function (b) { push(anc, where, [b.h, b.x].concat(b.items || []).filter(Boolean).join('؛ ')); });
+      if (s.internal) s.internal.forEach(function (L) { push(anc, where, [L.label, L.rel, L.why, L.effect].join('؛ ')); });
+      if (s.external) s.external.forEach(function (L) { var R = D.refs[L.ref] || {}; push('ref-' + L.ref, where, [R.label, L.rel, (R.paras || []).join(' '), L.why, L.effect, (L.commentary || []).map(function (c) { return c.q; }).join(' ')].join('؛ ')); });
+      if (s.cases) s.cases.forEach(function (c) { push(anc, where, [c.h, c.facts, c.steps.join(' '), c.result].join('؛ ')); });
       if (s.questions) s.questions.forEach(function (q) {
-        push(q.id, 'مسائل المدارسة', [q.q, (q.a || []).map(function (x) { return x.x; }).join(' '), q.intro || '', (q.views || []).map(function (v) { return v.h + ' ' + v.args.join(' '); }).join(' '), q.common || '', q.proposed || ''].filter(Boolean).join(' — '));
+        push(q.id, 'مسائل المدارسة', [q.q, (q.a || []).map(function (x) { return x.x; }).join(' '), q.intro || '', (q.views || []).map(function (v) { return v.h + ' ' + v.args.join(' '); }).join(' '), q.common || '', q.proposed || ''].filter(Boolean).join('؛ '));
       });
-      if (s.checklist) push(anc, where, s.checklist.join(' — '));
+      if (s.checklist) push(anc, where, s.checklist.join('؛ '));
     });
     return out;
   }
@@ -606,7 +612,7 @@
     });
     D.reg.forEach(function (r) {
       var host = D.lawBy[r.host];
-      addIdx({ n: r.n, kind: 'reg', where: 'نص اللائحة', title: 'المادة (' + r.n + ') من اللائحة' + (host ? ' — تحت المادة (' + host.n + ')' : ''), href: regHref(r.n), text: r.paras.join(' '), w: 3 });
+      addIdx({ n: r.n, kind: 'reg', where: 'نص اللائحة', title: 'المادة (' + r.n + ') من اللائحة' + (host ? '، تحت المادة (' + host.n + ')' : ''), href: regHref(r.n), text: r.paras.join(' '), w: 3 });
     });
     Object.keys(D.studies).forEach(function (k) {
       var n = +k, a = D.lawBy[n];

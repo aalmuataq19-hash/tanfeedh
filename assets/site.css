@@ -1,4 +1,4 @@
-/* مدارسة نظام التنفيذ ولائحته التنفيذية — الهوية البصرية */
+/* مدارسة نظام التنفيذ ولائحته التنفيذية: الهوية البصرية */
 
 @font-face { font-family: "IBM Plex Sans Arabic"; src: url("fonts/IBMPlexSansArabic-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
 @font-face { font-family: "IBM Plex Sans Arabic"; src: url("fonts/IBMPlexSansArabic-Medium.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
@@ -266,6 +266,10 @@ button { font-family: inherit; }
 .textcard.law { border-right: 4px solid var(--acc); background: linear-gradient(0deg, var(--card), var(--card)); }
 .textcard.reg { background: var(--reg-bg); border-right: 4px solid var(--line-strong); box-shadow: none; }
 .textcard.decree { border-right: 4px solid var(--line-strong); }
+.textcard.note { border-right: 4px solid var(--amber); background: var(--card); }
+.textcard.note .tc-label { color: var(--amber); background: var(--amber-soft); border-color: #E7D3A2; }
+.official-note p { font-size: calc(var(--fs) - 1px); line-height: var(--lh); margin: 0 0 10px; }
+.official-note .cite { font-size: 13px; color: var(--mute-strong); margin: 0; }
 .tc-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 10px; }
 .tc-label { font-size: 13px; font-weight: 700; color: var(--acc); background: var(--acc-faint); border: 1px solid #CFE2DC; border-radius: 999px; padding: 2px 10px; }
 .textcard.reg .tc-label { color: var(--mute-strong); background: #F1EEE5; border-color: var(--line-strong); }
