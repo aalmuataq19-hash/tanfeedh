@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>مدارسة نظام التنفيذ ولائحته التنفيذية</title>
+<meta name="description" content="مدارسة نظام التنفيذ الصادر بالمرسوم الملكي (م/237) ولائحته التنفيذية: نصوص المواد، وشرحها، وربطها بالأنظمة ذات الصلة، وتطبيقاتها ومسائلها.">
+<meta name="theme-color" content="#F7F5EF">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%230B6155'/%3E%3Ctext x='32' y='45' font-size='34' text-anchor='middle' fill='%23FFFEFA' font-family='sans-serif' font-weight='700'%3E%D8%AA%3C/text%3E%3C/svg%3E">
+<link rel="preload" href="assets/fonts/IBMPlexSansArabic-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/IBMPlexSansArabic-Bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/site.css?v=2">
+</head>
+<body>
+<a class="skip" href="#main">تجاوز إلى المحتوى</a>
+
+<header class="topbar" role="banner">
+  <button class="icon-btn menu-btn" id="menuBtn" aria-label="فتح الفهرس" aria-controls="sidebar" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+  </button>
+  <a class="brand" href="#/" aria-label="الصفحة الرئيسية">
+    <span class="brand-mark" aria-hidden="true">ت</span>
+    <span class="brand-text">
+      <span class="brand-title"><span class="bt-long">مدارسة نظام التنفيذ ولائحته التنفيذية</span><span class="bt-short">مدارسة نظام التنفيذ</span></span>
+      <span class="brand-sub">شرح المواد، وربطها بالأنظمة ذات الصلة، وتطبيقها</span>
+    </span>
+  </a>
+  <span class="spacer"></span>
+  <div class="search-wrap" id="searchWrap" role="search">
+    <svg class="search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>
+    <input id="searchInput" class="search-input" type="search" placeholder="ابحث برقم المادة أو بكلمة…" autocomplete="off" aria-label="البحث في المواد والشروح" aria-controls="results" aria-expanded="false">
+    <button class="search-clear" id="searchClear" type="button" aria-label="مسح البحث"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg></button>
+    <span class="kbd" aria-hidden="true">/</span>
+    <div class="results" id="results" role="listbox" aria-label="نتائج البحث"></div>
+  </div>
+  <button class="icon-btn search-mobile-btn" id="searchMobileBtn" aria-label="البحث">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>
+  </button>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar" aria-label="فهرس المواد">
+    <div class="drawer-head">
+      <b>الفهرس</b>
+      <button class="icon-btn" id="closeDrawer" aria-label="إغلاق الفهرس">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <nav id="toc" aria-label="أبواب النظام وفصوله ومواده"><div class="loading">يُحمَّل الفهرس…</div></nav>
+  </aside>
+  <main class="main" id="main" tabindex="-1">
+    <div class="page" id="view"><div class="loading">يُحمَّل المحتوى…</div></div>
+  </main>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<button class="backchip" id="backChip" type="button" aria-live="polite">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l-5-5 5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+  <span id="backChipText">العودة</span>
+  <span class="x" id="backChipClose" role="button" aria-label="إخفاء">×</span>
+</button>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<noscript><div class="page" style="padding:40px 20px">يحتاج هذا الموقع إلى تفعيل JavaScript في المتصفح لعرض المواد والبحث فيها.</div></noscript>
+<script src="assets/app.js?v=2" defer></script>
+</body>
+</html>

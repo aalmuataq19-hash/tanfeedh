@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مدارسة نظام التنفيذ</title>
+<script>
+  // يحوّل الروابط المكتوبة بصيغة المسار (مثل /tanfeedh/article/11) إلى صيغة الموقع (#/article/11)
+  (function () {
+    var p = location.pathname, i = p.indexOf('/tanfeedh/');
+    var base = i >= 0 ? p.slice(0, i + 10) : '/';
+    var rest = i >= 0 ? p.slice(i + 10) : p.replace(/^\//, '');
+    location.replace(base + (rest ? '#/' + rest.replace(/\/$/, '') : '') + location.hash);
+  })();
+</script>
+</head>
+<body style="font-family:sans-serif;background:#F7F5EF;color:#242724;padding:40px;text-align:center">
+  يجري تحويلك إلى <a href="./">الصفحة الرئيسية</a>…
+</body>
+</html>
