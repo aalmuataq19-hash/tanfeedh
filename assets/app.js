@@ -15,7 +15,7 @@
     set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* التخزين غير متاح */ } }
   };
 
-  var D = { parts: [], law: [], reg: [], lawBy: {}, regBy: {}, instruments: [], refs: {}, laws: {}, studies: {} };
+  var D = { parts: [], law: [], reg: [], lawBy: {}, regBy: {}, instruments: [], refs: {}, laws: {}, studies: {}, studyList: [], studySet: {} };
   var SITE = 'مدارسة نظام التنفيذ ولائحته التنفيذية';
 
   /* ───── الأيقونات ───── */
@@ -89,7 +89,7 @@
       if (k === 'م') { href = lawHref(id); text = text || 'المادة (' + id + ')'; }
       else if (k === 'ل') { href = regHref(+id); text = text || 'المادة (' + id + ') من اللائحة'; }
       else if (k === 'ر') { href = '#/article/' + CTX + '/ref-' + id; text = text || (D.refs[id] ? D.refs[id].label : id); }
-      else if (k === 'س') { href = '#/article/' + CTX + '/' + id; text = text || 'المسألة'; }
+      else if (k === 'س') { href = '#/article/' + (id.indexOf('/') > 0 ? id : CTX + '/' + id); text = text || 'المسألة'; }
       return '<a class="xref" data-int="1" href="' + href + '">' + text + '</a>';
     });
     return h;
@@ -113,18 +113,30 @@
       D.parts.forEach(function (p) {
         p.chapters.forEach(function (c) { c.articles.forEach(function (n) { if (D.lawBy[n]) { D.lawBy[n].part = p; D.lawBy[n].chapter = c.label ? c : null; } }); });
       });
-      var list = (res[5] && res[5].studies) || [];
-      return Promise.all(list.map(function (n) {
-        return getJSON('data/studies/' + n + '.json').then(function (s) { D.studies[n] = s; }).catch(function () { /* شرح غير متاح */ });
-      }));
+      /* المواد العلمية تُحمّل عند فتح المادة، وتُجلب كلها في الخلفية للبحث */
+      D.studyList = ((res[5] && res[5].studies) || []).slice().sort(function (a, b) { return a - b; });
+      D.studyList.forEach(function (n) { D.studySet[n] = 1; });
     });
+  }
+  var studyReq = {}, allReq = null;
+  function ensureStudy(n) {
+    if (!D.studySet[n] || D.studies[n]) return Promise.resolve(D.studies[n] || null);
+    if (!studyReq[n]) {
+      studyReq[n] = getJSON('data/studies/' + n + '.json').then(function (s) { D.studies[n] = s; indexStudy(n); return s; })
+        .catch(function () { delete studyReq[n]; return null; });
+    }
+    return studyReq[n];
+  }
+  function ensureAllStudies() {
+    if (!allReq) allReq = Promise.all(D.studyList.map(ensureStudy));
+    return allReq;
   }
 
   /* ───── الفهرس ───── */
   function tocItem(n) {
     var a = D.lawBy[n];
     return '<li class="toc-item"><a href="' + lawHref(n) + '" data-n="' + n + '"><span class="toc-n">' + n + '</span><span class="toc-t">' + esc(a.title) + '</span>' +
-      (D.studies[n] ? '<span class="dot-ready" title="مادة علمية مكتملة"></span>' : '') + '</a></li>';
+      (D.studySet[n] ? '<span class="dot-ready" title="مادة علمية مكتملة"></span>' : '') + '</a></li>';
   }
   function renderTOC() {
     var h = '<div class="toc-top">' +
@@ -157,16 +169,25 @@
   }
 
   /* ───── الصفحة الرئيسية ───── */
+  /* عدد المواد مع المعدود بحسب قواعد العربية */
+  function articlesCount(n) {
+    if (n === 1) return 'مادة واحدة';
+    if (n === 2) return 'مادتين';
+    var r = n % 100;
+    return '<b>' + n + '</b>' + (r >= 3 && r <= 10 ? ' مواد' : ' مادة');
+  }
   function viewHome() {
-    var ready = Object.keys(D.studies).map(Number).sort(function (a, b) { return a - b; });
+    var ready = D.studyList, all = ready.length >= D.law.length;
     var h = '<section class="hero">' +
       '<div class="eyebrow">نظام التنفيذ الصادر بالمرسوم الملكي (م/237) ولائحته التنفيذية</div>' +
       '<h1>مدارسة نظام التنفيذ ولائحته التنفيذية</h1>' +
       '<p>مادة علمية للمدارسة بين القضاة والممارسين: نص كل مادة كاملًا مع ما يتصل بها من اللائحة، ثم شرحها، وما استجد فيها، وربطها بمواد النظام والأنظمة ذات الصلة، وتطبيقاتها ومسائلها مع أجوبتها.</p>' +
-      '<div class="meta-row"><span>يُعمل بالنظام واللائحة بعد مضي <b>180</b> يومًا من نشر النظام في <b>1447/11/14هـ</b> (<a href="#/instruments/nafath">بيان تاريخ النفاذ</a>)</span><span><b>65</b> مادة نظامية و<b>54</b> مادة لائحية</span></div>' +
+      '<div class="meta-row"><span>يُعمل بالنظام واللائحة بعد مضي <b>180</b> يومًا من نشر النظام في <b>1447/11/14هـ</b> (<a href="#/instruments/nafath">بيان تاريخ النفاذ</a>)</span><span><b>65</b> مادة نظامية و<b>54</b> مادة لائحية</span>' +
+      '<span>' + (all ? 'المادة العلمية مكتملة للمواد كلها' : 'اكتملت المادة العلمية في ' + articlesCount(ready.length) + ' من <b>' + D.law.length + '</b>') + '</span></div>' +
       '<div class="btn-row">' +
-      (ready.length ? '<a class="btn primary" href="' + lawHref(ready[0]) + '">ابدأ بالمادة (' + ready[0] + '): نموذج مكتمل</a>' : '') +
-      '<a class="btn" href="' + lawHref(1) + '">من المادة الأولى</a>' +
+      '<a class="btn primary" href="' + lawHref(1) + '">' + (all ? 'ابدأ المدارسة من المادة (1)' : 'من المادة الأولى') + '</a>' +
+      (!all && ready.length ? '<a class="btn" href="' + lawHref(ready[0]) + '">أول مادة مكتملة: المادة (' + ready[0] + ')</a>' : '') +
+      '<a class="btn" href="#/instruments">أداة الإصدار والنفاذ</a>' +
       '<a class="btn" href="#/about">منهجية المدارسة</a>' +
       '</div></section>';
     h += '<h2 class="section-title">أبواب النظام</h2><div class="parts">';
@@ -303,11 +324,11 @@
     var a = D.lawBy[n];
     if (!a) return viewNotFound();
     CTX = n;
-    var st = D.studies[n];
+    var st = D.studies[n], hasSt = !!D.studySet[n];
     var h = '<div class="print-head">' + SITE + ': المادة (' + n + ')</div>';
     h += crumbs(a);
     h += '<header class="art-head"><div class="art-kicker"><span class="art-no">المادة (' + n + ')</span><span class="art-ord">المادة ' + esc(a.ord) + '</span>' +
-      '<span class="status' + (st ? ' ready' : '') + '">' + (st ? 'مادة علمية مكتملة' : 'النص فقط') + '</span></div>' +
+      '<span class="status' + (hasSt ? ' ready' : '') + '">' + (hasSt ? 'مادة علمية مكتملة' : 'النص فقط') + '</span></div>' +
       '<h1 class="art-title">' + esc(a.title) + '</h1><div class="title-note">عنوان توضيحي من إعداد المدارسة، وليس من النص الرسمي.</div>' +
       (st && st.abstract ? '<div class="abstract">' + md(st.abstract) + '</div>' : '') + '</header>';
     h += '<div class="toolbar no-print" role="toolbar" aria-label="أدوات المادة">' +
@@ -327,6 +348,7 @@
       h += '<p class="also">وتحيل إلى هذه المادة أيضًا من اللائحة: ' + a.citedByRegs.map(function (r) { return '<a class="xref" data-int="1" href="' + regHref(r) + '">المادة (' + r + ')</a>'; }).join('، ') + '.</p>';
     }
     if (st) h += renderStudy(st);
+    else if (hasSt) h += '<div class="empty-note"><b>تعذر تحميل المادة العلمية لهذه المادة.</b><br>تأكد من الاتصال بالإنترنت ثم أعد تحميل الصفحة.</div>';
     else h += '<div class="empty-note"><b>المادة العلمية لهذه المادة قيد الإعداد.</b><br>يظهر هنا نص المادة وما يتصل بها من اللائحة، وتُضاف عناصر المدارسة بعد اعتماد النموذج. ويمكن الاطلاع على النموذج المكتمل في <a class="xref" data-int="1" href="' + lawHref(11) + '">المادة (11)</a>.</div>';
     var prev = D.lawBy[n - 1], next = D.lawBy[n + 1];
     h += '<nav class="pager no-print" aria-label="التنقل بين المواد">' +
@@ -341,7 +363,7 @@
       '<p>نصوص أداة إصدار النظام ولائحته، وفيها الأحكام الانتقالية المؤثرة في تطبيق النظام.</p></div>';
     h += '<article class="textcard note" id="nafath"><div class="tc-head"><span class="tc-label">تنبيه</span><span class="tc-name">تاريخ العمل بالنظام واللائحة</span></div><div class="official-note">' +
       '<p>نصت ' + '<a class="xref" data-int="1" href="#/article/65">الفقرة (2) من المادة (65)</a>' + ' على أن يُعمل بالنظام «بعد مضي (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية»، ونصت ' + '<a class="xref" data-int="1" href="' + regHref(54) + '">المادة (54) من اللائحة</a>' + ' على أن يُعمل باللائحة من تاريخ العمل بالنظام. وقد نُشر النظام في جريدة أم القرى في 1447/11/14هـ الموافق 2026/5/1م (مذكرة الفروق، ص5).</p>' +
-      '<p>وذكرت النسخة المنسقة ومذكرة الفروق أن العمل به من 1448/5/17هـ الموافق 2026/10/28م. وعلى طريقة وزارة العدل في احتساب نفاذ نظام المعاملات المدنية -إذ جعلت بدء سريانه اليوم التالي لمضي المدة كاملة بعد يوم النشر- يكون أول يوم للعمل بالنظام 1448/5/18هـ الموافق 2026/10/29م (وزارة العدل، شرح نظام المعاملات المدنية، ج4، شرح المادة (721)، ص289 (تقريبي)). ونقلت الصحف عن بيان الوزارة عند إقرار اللائحة أن العمل يبدأ في 29 أكتوبر 2026م.</p>' +
+      '<p>وذكرت النسخة المنسقة ومذكرة الفروق أن العمل به من 1448/5/17هـ الموافق 2026/10/28م. وعلى طريقة وزارة العدل في احتساب نفاذ نظام المعاملات المدنية -إذ جعلت بدء سريانه اليوم التالي لمضي المدة كاملة بعد يوم النشر- يكون أول يوم للعمل بالنظام 1448/5/18هـ الموافق 2026/10/29م (وزارة العدل، شرح نظام المعاملات المدنية، ج4، شرح المادة (721)، ص291). ونقلت الصحف عن بيان الوزارة عند إقرار اللائحة أن العمل يبدأ في 29 أكتوبر 2026م.</p>' +
       '<p class="cite">المقابلة بين التاريخين الهجري والميلادي بتقويم أم القرى.</p></div></article>';
     D.instruments.forEach(function (ins) {
       h += '<article class="textcard decree" id="' + ins.id + '"><div class="tc-head"><span class="tc-label">' + esc(ins.label) + '</span><span class="tc-name">' + esc(ins.title) + '</span><span class="tc-src">' + esc(ins.src || ('النسخة المنسقة، ص' + ins.blocks[0].page)) + '</span></div><div class="official">' +
@@ -390,9 +412,11 @@
       '<li>نصوص نظام المعاملات المدنية منقولة من شرح وزارة العدل، والاقتباس منه حرفي بين علامتي التنصيص « »، بصيغة: وزارة العدل، شرح نظام المعاملات المدنية، ج[الجزء]، شرح المادة ([رقمها])، ص[الصفحة]، بعد التحقق من رقم الصفحة في النسخة المصورة.</li>' +
       '<li>يُفصل دائمًا بين نص المادة، وشرح الوزارة، وتعليق المدارسة.</li>' +
       '<li>ما لم تتم مطابقة نصه لا يُذكر رقمه، ويُشار إليه بوصفه موضعًا للبحث.</li></ul></div>' +
-      '<h2>حالة الإعداد</h2><div class="card"><p style="margin:0">المواد التي اكتملت مادتها العلمية: ' +
-      Object.keys(D.studies).map(function (n) { return '<a class="xref" data-int="1" href="' + lawHref(n) + '">المادة (' + n + ')</a>'; }).join('، ') +
-      '. وبقية المواد يظهر فيها النص الرسمي وما يتصل به من اللائحة إلى حين إعداد مادتها العلمية.</p></div></div>';
+      '<h2>حالة الإعداد</h2><div class="card"><p style="margin:0">' +
+      (D.studyList.length >= D.law.length ? 'اكتملت المادة العلمية لمواد النظام كلها، وعددها ' + D.law.length + ' مادة. وكل مادة مرّت بكتابة ثم مراجعة مستقلة ثم تحرير.' :
+      'المواد التي اكتملت مادتها العلمية: ' +
+      D.studyList.map(function (n) { return '<a class="xref" data-int="1" href="' + lawHref(n) + '">المادة (' + n + ')</a>'; }).join('، ') +
+      '. وبقية المواد يظهر فيها النص الرسمي وما يتصل به من اللائحة إلى حين إعداد مادتها العلمية.') + '</p></div></div>';
     return { title: 'منهجية المدارسة - ' + SITE, html: h, label: 'منهجية المدارسة' };
   }
   function viewNotFound() {
@@ -412,8 +436,20 @@
   var current = { route: null, label: '' };
   var pendingScroll = null;
 
+  var renderToken = 0;
   function render() {
-    var route = parseHash();
+    var route = parseHash(), token = ++renderToken;
+    if (route.name === 'article' && D.studySet[route.n] && !D.studies[route.n]) {
+      /* انتظر المادة العلمية قبل العرض حتى لا تقفز الصفحة، وأظهر مؤشرًا إن تأخرت */
+      var slow = setTimeout(function () {
+        if (token === renderToken) $('#view').innerHTML = '<div class="empty-note">جارٍ تحميل المادة…</div>';
+      }, 200);
+      ensureStudy(route.n).then(function () { clearTimeout(slow); if (token === renderToken) renderNow(route); });
+      return;
+    }
+    renderNow(route);
+  }
+  function renderNow(route) {
     var v = route.name === 'home' ? viewHome() : route.name === 'article' ? viewArticle(route.n) :
       route.name === 'instruments' ? viewInstruments() : route.name === 'about' ? viewAbout() : viewNotFound();
     var sameArticle = current.route && route.name === 'article' && current.route.name === 'article' && current.route.n === route.n;
@@ -614,14 +650,18 @@
       var host = D.lawBy[r.host];
       addIdx({ n: r.n, kind: 'reg', where: 'نص اللائحة', title: 'المادة (' + r.n + ') من اللائحة' + (host ? '، تحت المادة (' + host.n + ')' : ''), href: regHref(r.n), text: r.paras.join(' '), w: 3 });
     });
-    Object.keys(D.studies).forEach(function (k) {
-      var n = +k, a = D.lawBy[n];
-      collectStudy(n, D.studies[k]).forEach(function (e) {
-        addIdx({ n: n, kind: 'study', where: e.where, title: a ? a.title : '', href: '#/article/' + n + '/' + e.anchor, text: e.text, w: 2 });
-      });
-    });
+    Object.keys(D.studies).forEach(function (k) { indexStudy(+k); });
     D.instruments.forEach(function (ins) {
       ins.blocks.forEach(function (b) { addIdx({ n: null, kind: 'ins', where: ins.label, title: ins.title, href: '#/instruments/' + ins.id, text: b.text, w: 1 }); });
+    });
+  }
+  var indexed = {};
+  function indexStudy(n) {
+    if (indexed[n] || !D.studies[n]) return;
+    indexed[n] = 1;
+    var a = D.lawBy[n];
+    collectStudy(n, D.studies[n]).forEach(function (e) {
+      addIdx({ n: n, kind: 'study', where: e.where, title: a ? a.title : '', href: '#/article/' + n + '/' + e.anchor, text: e.text, w: 2 });
     });
   }
   function snippet(e, terms) {
@@ -710,8 +750,12 @@
     if (!$('#sidebar').classList.contains('open')) $('#overlay').classList.remove('show');
   }
   var sInput = $('#searchInput'), sTimer;
-  sInput.addEventListener('input', function () { clearTimeout(sTimer); sTimer = setTimeout(function () { renderResults(sInput.value); }, 120); });
-  sInput.addEventListener('focus', function () { if (sInput.value.trim()) renderResults(sInput.value); });
+  /* البحث يشمل المواد العلمية كلها: تُجلب عند أول استعمال للبحث، ثم تُحدّث النتائج */
+  var refreshAfterLoad = function () {
+    ensureAllStudies().then(function () { if (sInput.value.trim() && $('#results').classList.contains('open')) renderResults(sInput.value); });
+  };
+  sInput.addEventListener('input', function () { clearTimeout(sTimer); sTimer = setTimeout(function () { renderResults(sInput.value); }, 120); refreshAfterLoad(); });
+  sInput.addEventListener('focus', function () { if (sInput.value.trim()) renderResults(sInput.value); refreshAfterLoad(); });
   sInput.addEventListener('keydown', function (e) {
     var items = $$('#results .res-item');
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -780,6 +824,7 @@
   load().then(function () {
     renderTOC(); buildIndex(); render();
     window.addEventListener('hashchange', render);
+    setTimeout(ensureAllStudies, 2500);
   }).catch(function (err) {
     $('#view').innerHTML = '<div class="empty-note"><b>تعذر تحميل بيانات المواد.</b><br>تأكد من الاتصال بالإنترنت ثم أعد تحميل الصفحة.</div>';
     $('#toc').innerHTML = '';
