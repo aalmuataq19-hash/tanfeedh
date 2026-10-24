@@ -130,6 +130,7 @@ button { font-family: inherit; }
 .res-snip { font-size: 13.5px; color: var(--mute-strong); margin-top: 3px; line-height: 1.75; }
 .res-snip mark, .content mark.hit { background: var(--hl); color: inherit; border-radius: 3px; padding: 0 1px; }
 .res-empty { padding: 18px 12px; color: var(--mute-strong); font-size: 14px; }
+.res-note { margin: 2px 10px 8px; padding: 7px 10px; border-radius: 8px; background: var(--note-bg, #fdf6e3); color: var(--mute-strong); font-size: 12.5px; line-height: 1.7; }
 
 /* ───── التخطيط ───── */
 .layout { display: flex; align-items: flex-start; min-height: calc(100vh - var(--topbar)); }

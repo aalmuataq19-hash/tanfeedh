@@ -81,6 +81,11 @@
 
   /* ───── الترميز المختصر في المادة العلمية ───── */
   var CTX = 0;
+  /* هل بطاقة المرجع معروضة في روابط المادة n؟ */
+  function cardIn(n, id) {
+    var st = D.studies[n]; if (!st) return false;
+    return st.sections.some(function (s) { return (s.external || []).some(function (L) { return L.ref === id; }); });
+  }
   function md(s) {
     var h = esc(s);
     h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
@@ -88,7 +93,12 @@
       var href = '#/', text = label;
       if (k === 'م') { href = lawHref(id); text = text || 'المادة (' + id + ')'; }
       else if (k === 'ل') { href = regHref(+id); text = text || 'المادة (' + id + ') من اللائحة'; }
-      else if (k === 'ر') { href = '#/article/' + CTX + '/ref-' + id; text = text || (D.refs[id] ? D.refs[id].label : id); }
+      else if (k === 'ر') {
+        var R = D.refs[id], at = cardIn(CTX, id) ? CTX : (R && R.home && R.home[0]);
+        text = text || (R ? R.label : id);
+        if (!at) return text;   /* لا بطاقة له في أي مادة: يبقى نصًّا */
+        href = '#/article/' + at + '/ref-' + id;
+      }
       else if (k === 'س') { href = '#/article/' + (id.indexOf('/') > 0 ? id : CTX + '/' + id); text = text || 'المسألة'; }
       return '<a class="xref" data-int="1" href="' + href + '">' + text + '</a>';
     });
@@ -127,9 +137,25 @@
     }
     return studyReq[n];
   }
+  var studiesLoading = false;
   function ensureAllStudies() {
-    if (!allReq) allReq = Promise.all(D.studyList.map(ensureStudy));
+    if (!allReq) {
+      studiesLoading = true;
+      allReq = Promise.all(D.studyList.map(ensureStudy)).then(function () {
+        studiesLoading = false;
+        var missing = D.studyList.filter(function (n) { return !D.studies[n]; }).length;
+        if (missing) allReq = null;   /* يُعاد تحميل الناقص وحده عند الاستعمال التالي للبحث */
+        return missing;
+      });
+    }
     return allReq;
+  }
+  /* بيان شمول البحث للشروح: هل اكتمل، أو ما زال يُحمّل، أو تعثر بعضه */
+  function coverageNote() {
+    var total = D.studyList.length, have = D.studyList.filter(function (n) { return D.studies[n]; }).length;
+    if (have >= total) return '';
+    if (studiesLoading) return 'جارٍ تحميل شروح المواد للبحث فيها (' + have + ' من ' + total + ')، فقد تزيد النتائج.';
+    return 'لم يُحمَّل شرح بعض المواد (' + (total - have) + ' من ' + total + ')، فالنتائج ناقصة. أعد البحث بعد عودة الاتصال.';
   }
 
   /* ───── الفهرس ───── */
@@ -419,13 +445,17 @@
       '. وبقية المواد يظهر فيها النص الرسمي وما يتصل به من اللائحة إلى حين إعداد مادتها العلمية.') + '</p></div></div>';
     return { title: 'منهجية المدارسة - ' + SITE, html: h, label: 'منهجية المدارسة' };
   }
-  function viewNotFound() {
-    return { title: SITE, html: '<div class="empty-note"><b>الصفحة غير موجودة.</b><br>تأكد من الرابط، أو انتقل إلى <a href="#/">الصفحة الرئيسية</a>.</div>' };
+  function viewNotFound(route) {
+    var head = route && route.bad ? 'الرابط غير صالح.' : 'الصفحة غير موجودة.';
+    return { title: SITE, html: '<div class="empty-note"><b>' + head + '</b><br>تأكد من الرابط، أو انتقل إلى <a href="#/">الصفحة الرئيسية</a>.</div>' };
   }
 
   /* ───── التوجيه ───── */
   function parseHash() {
-    var h = decodeURIComponent(location.hash || '').replace(/^#\/?/, '');
+    var h;
+    try { h = decodeURIComponent(location.hash || ''); } catch (e) { return { name: 'notfound', bad: true }; }
+    h = h.replace(/^#\/?/, '');
+    if (h === 'main') return { name: 'home' };   /* رابط قديم لزر «تجاوز إلى المحتوى» */
     var parts = h.split('/').filter(Boolean);
     if (!parts.length) return { name: 'home' };
     if (parts[0] === 'article' && /^\d+$/.test(parts[1] || '')) return { name: 'article', n: +parts[1], anchor: parts[2] || '' };
@@ -442,7 +472,9 @@
     if (route.name === 'article' && D.studySet[route.n] && !D.studies[route.n]) {
       /* انتظر المادة العلمية قبل العرض حتى لا تقفز الصفحة، وأظهر مؤشرًا إن تأخرت */
       var slow = setTimeout(function () {
-        if (token === renderToken) $('#view').innerHTML = '<div class="empty-note">جارٍ تحميل المادة…</div>';
+        if (token !== renderToken) return;
+        $('#view').innerHTML = '<div class="empty-note">جارٍ تحميل المادة…</div>';
+        current.route = null; current.studyShown = null;   /* المعروض الآن مؤشر التحميل لا المادة السابقة */
       }, 200);
       ensureStudy(route.n).then(function () { clearTimeout(slow); if (token === renderToken) renderNow(route); });
       return;
@@ -451,8 +483,10 @@
   }
   function renderNow(route) {
     var v = route.name === 'home' ? viewHome() : route.name === 'article' ? viewArticle(route.n) :
-      route.name === 'instruments' ? viewInstruments() : route.name === 'about' ? viewAbout() : viewNotFound();
-    var sameArticle = current.route && route.name === 'article' && current.route.name === 'article' && current.route.n === route.n;
+      route.name === 'instruments' ? viewInstruments() : route.name === 'about' ? viewAbout() : viewNotFound(route);
+    /* «المادة نفسها» فقط إذا كان المعروض هو هذه المادة بحالة مادتها العلمية نفسها (محمّلة أو غير محمّلة) */
+    var sameArticle = !!(current.route && route.name === 'article' && current.route.name === 'article' &&
+      current.route.n === route.n && current.studyShown === !!D.studies[route.n]);
     if (!sameArticle) {
       $('#view').innerHTML = v.html;
       updateFsVal();
@@ -460,9 +494,26 @@
     document.documentElement.classList.toggle('with-toolbar', !!$('#view .toolbar'));
     document.title = v.title;
     current.route = route; current.label = v.label || 'الصفحة السابقة';
+    current.studyShown = route.name === 'article' ? !!D.studies[route.n] : null;
     markTOC(route);
     closeDrawer(); closeSearch();
-    if (route.anchor) {
+    var restoreY = null;
+    if (pendingScroll) {
+      if (pendingScroll.hash === (location.hash || '#/')) restoreY = pendingScroll.y;
+      pendingScroll = null;
+    }
+    if (restoreY !== null) {
+      /* الرجوع إلى موضع قراءة سابق: يُفتح ما كان مفتوحًا للإحالة حتى يطابق الموضع، ثم يُستعاد الموضع نفسه */
+      if (route.anchor) {
+        var tgt = document.getElementById(route.anchor) || document.getElementById('sec-' + route.anchor);
+        if (tgt) {
+          var s0 = tgt.closest('details.sec'); if (s0) s0.open = true;
+          if (tgt.tagName === 'DETAILS') tgt.open = true;
+          var m0 = tgt.closest('details.lc-more'); if (m0) m0.open = true;
+        }
+      }
+      requestAnimationFrame(function () { window.scrollTo(0, restoreY); });
+    } else if (route.anchor) {
       var el = document.getElementById(route.anchor) || document.getElementById('sec-' + route.anchor);
       if (el) {
         var sec = el.closest('details.sec'); if (sec) sec.open = true;
@@ -476,9 +527,6 @@
           el.classList.add(el.classList.contains('linkcard') ? 'flash' : 'flash-target');
         });
       }
-    } else if (pendingScroll !== null) {
-      var y = pendingScroll; pendingScroll = null;
-      requestAnimationFrame(function () { window.scrollTo(0, y); });
     } else if (!sameArticle) {
       window.scrollTo(0, 0);
     }
@@ -512,11 +560,19 @@
     if (!backStack) return;
     var b = backStack; backStack = null;
     var base = b.hash.split('/').slice(0, 3).join('/');
-    pendingScroll = b.y;
+    pendingScroll = { y: b.y, hash: base };
     if ((location.hash || '#/') === base) { render(); } else { location.hash = base; }
   });
+  /* «تجاوز إلى المحتوى»: ينقل التركيز إلى المحتوى دون تغيير مسار الصفحة */
+  var skipLink = document.querySelector('a.skip');
+  if (skipLink) skipLink.addEventListener('click', function (e) {
+    e.preventDefault();
+    var m = $('#main'); if (!m) return;
+    m.focus({ preventScroll: true });
+    m.scrollIntoView({ block: 'start' });
+  });
   window.addEventListener('popstate', function (e) {
-    if (e.state && typeof e.state.y === 'number') pendingScroll = e.state.y;
+    pendingScroll = (e.state && typeof e.state.y === 'number') ? { y: e.state.y, hash: location.hash || '#/' } : null;
   });
 
   document.addEventListener('click', function (e) {
@@ -530,16 +586,20 @@
     clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove('show'); }, 1800);
   }
   function copy(text, msg) {
-    var done = function () { toast(msg); };
+    var ok = function () { toast(msg); };
+    var fail = function () { toast('تعذر النسخ، فانسخ النص يدويًّا'); };
+    var viaFallback = function () { if (fallbackCopy(text)) ok(); else fail(); };
     if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text); done(); });
-    } else { fallbackCopy(text); done(); }
+      try { navigator.clipboard.writeText(text).then(ok, viaFallback); } catch (e) { viaFallback(); }
+    } else { viaFallback(); }
   }
+  /* النسخ البديل: يعيد true عند النجاح فقط */
   function fallbackCopy(text) {
-    var ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', '');
+    var ta = document.createElement('textarea'), done = false; ta.value = text; ta.setAttribute('readonly', '');
     ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); } catch (e) { /* */ }
+    try { done = document.execCommand('copy') === true; } catch (e) { done = false; }
     document.body.removeChild(ta);
+    return done;
   }
   function articleLink(n) { return location.href.split('#')[0] + '#/article/' + n; }
   function plainArticle(a) {
@@ -712,7 +772,7 @@
     res.forEach(function (r) { var k = r.e.href + '|' + r.e.kind; if (seen[k]) return; seen[k] = 1; out.push(r); });
     return out.slice(0, 40);
   }
-  var lastQuery = '', activeIdx = -1, resultsCache = [];
+  var lastQuery = '', activeIdx = -1, resultsCache = [], resultsQuery = '';
   /* صيغة العدد مع المعدود بحسب قواعد العربية */
   function countLabel(n, capped) {
     if (capped) return 'أبرز ' + n + ' نتيجة';
@@ -723,13 +783,18 @@
   }
   function renderResults(q) {
     var box = $('#results');
-    if (!q.trim()) { box.classList.remove('open'); $('#searchInput').setAttribute('aria-expanded', 'false'); return; }
-    var list = search(q); resultsCache = list; activeIdx = -1;
+    if (!q.trim()) {
+      /* مسح الخانة يمحو النتائج السابقة حتى لا تُفتح نتيجة قديمة */
+      resultsCache = []; activeIdx = -1; resultsQuery = '';
+      box.classList.remove('open'); $('#searchInput').setAttribute('aria-expanded', 'false'); return;
+    }
+    var list = search(q); resultsCache = list; activeIdx = -1; resultsQuery = q;
+    var note = coverageNote(), noteHTML = note ? '<div class="res-note" role="status">' + esc(note) + '</div>' : '';
     var terms = norm(q).split(' ').filter(function (t) { return t.length > 1 || /\d/.test(t); });
     if (!list.length) {
-      box.innerHTML = '<div class="res-empty">لا توجد نتائج مطابقة. جرّب رقم المادة (مثل: 11 أو ل12) أو كلمة أخرى.</div>';
+      box.innerHTML = noteHTML + '<div class="res-empty">لا توجد نتائج مطابقة. جرّب رقم المادة (مثل: 11 أو ل12) أو كلمة أخرى.</div>';
     } else {
-      box.innerHTML = '<div class="res-head">' + countLabel(list.length, list.length >= 40) + '</div>' + list.map(function (r, i) {
+      box.innerHTML = '<div class="res-head">' + countLabel(list.length, list.length >= 40) + '</div>' + noteHTML + list.map(function (r, i) {
         var e = r.e, num = e.kind === 'reg' ? 'ل' + e.n : (e.n ? 'م' + e.n : '');
         return '<a class="res-item" role="option" href="' + e.href + '" data-i="' + i + '"><div class="res-top"><span class="res-num">' + num + '</span><span class="res-title">' + esc(e.title) + '</span><span class="res-where">' + esc(e.where) + '</span></div>' +
           '<div class="res-snip">' + (r.num ? esc(e.text.slice(0, 150)) + (e.text.length > 150 ? '…' : '') : snippet(e, terms)) + '</div></a>';
@@ -764,7 +829,12 @@
       items.forEach(function (it, i) { it.classList.toggle('active', i === activeIdx); });
       items[activeIdx].scrollIntoView({ block: 'nearest' });
     } else if (e.key === 'Enter') {
-      e.preventDefault(); openSearchResult(activeIdx >= 0 ? activeIdx : 0);
+      e.preventDefault();
+      var qv = sInput.value;
+      if (!qv.trim()) return;
+      /* إن لم تُحدَّث النتائج بعد لآخر ما كُتب، فاحسبها الآن قبل الفتح */
+      if (resultsQuery !== qv) { clearTimeout(sTimer); renderResults(qv); activeIdx = -1; }
+      if (resultsCache.length) openSearchResult(activeIdx >= 0 ? activeIdx : 0);
     } else if (e.key === 'Escape') { closeSearch(); sInput.blur(); }
   });
   $('#results').addEventListener('click', function (e) {
@@ -822,8 +892,8 @@
   try { history.scrollRestoration = 'manual'; } catch (e) { /* */ }
   var savedFs = store.get('fs', null); if (savedFs) applyFs(savedFs);
   load().then(function () {
+    window.addEventListener('hashchange', render);   /* قبل العرض الأول حتى لا يعطله خطأ في رابط الفتح */
     renderTOC(); buildIndex(); render();
-    window.addEventListener('hashchange', render);
     setTimeout(ensureAllStudies, 2500);
   }).catch(function (err) {
     $('#view').innerHTML = '<div class="empty-note"><b>تعذر تحميل بيانات المواد.</b><br>تأكد من الاتصال بالإنترنت ثم أعد تحميل الصفحة.</div>';
