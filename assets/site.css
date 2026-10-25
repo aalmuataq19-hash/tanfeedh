@@ -370,7 +370,7 @@ button { font-family: inherit; }
 .case { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px 18px; margin-bottom: 14px; background: var(--card); }
 .case-h { font-weight: 700; font-size: calc(var(--fs) - .5px); margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
 .case-h .cno { flex: none; width: 26px; height: 26px; border-radius: 8px; background: var(--quote-bg); display: grid; place-items: center; font-size: 13.5px; }
-.case-label { font-size: 12.5px; font-weight: 700; color: var(--mute-strong); display: block; margin: 10px 0 2px; }
+.case-label { font-size: calc(var(--fs) - 1px); font-weight: 700; color: var(--ink); display: block; margin: 12px 0 4px; }
 .case ol { margin: 4px 0 8px; padding-right: 1.3em; }
 .case-result { background: var(--acc-faint); border-radius: 8px; padding: 8px 12px; font-weight: 500; }
 .case-note { font-size: calc(var(--fs) - 2px); color: var(--mute-strong); margin-top: 8px; }
@@ -508,7 +508,46 @@ button { font-family: inherit; }
 }
 
 /* ───── الطباعة ───── */
+
+/* ───── التمييز بالتظليل (القرار 11): خلفية هادئة على الجزء المعني وحده ───── */
+.hl { border-radius: 3px; padding: .05em .12em; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.hl-e { background: #E2F1E8; }
+.hl-i { background: #EFEBE3; }
+.hl-r { background: #F8EBC6; }
+.hl-p { background: #E3EAF6; }
+.hl-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 14px; line-height: 1.6; padding: 10px 14px; margin: 0 0 14px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.hl-legend-t { font-weight: 700; color: var(--mute-strong); }
+.hl-legend .hl, .legend-item .hl { padding: 2px 8px; border-radius: 6px; font-weight: 600; display: inline-block; }
+.legend-item .hl { margin-bottom: 6px; font-size: 14px; }
+.legend-note { font-size: 14.5px; color: var(--mute-strong); margin: 10px 2px 0; line-height: 1.8; }
+.prop-h { display: block; font-weight: 700; margin-bottom: 4px; }
+.council-h { display: block; margin-bottom: 2px; }
+
+/* ───── مجموعتا الروابط (القرار 8) ───── */
+.lgroup { border: 1px solid var(--line); border-radius: 12px; margin: 12px 0; background: var(--card); }
+.lgroup > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 13px 14px; font-weight: 700; font-size: calc(var(--fs) - .5px); border-radius: 12px; }
+.lgroup > summary::-webkit-details-marker { display: none; }
+.lgroup > summary:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+.lg-count { font-size: 12.5px; font-weight: 700; min-width: 24px; height: 24px; padding: 0 7px; border-radius: 999px; display: inline-grid; place-items: center; background: var(--acc-faint); color: var(--acc); }
+.lgroup > summary .toc-chev { margin: 0 auto 0 0; width: 18px; height: 18px; }
+.lgroup[open] > summary .toc-chev { transform: rotate(-90deg); }
+.lgroup[open] > summary { border-bottom: 1px solid var(--line); border-radius: 12px 12px 0 0; }
+.lg-body { padding: 6px 12px 4px; }
+.lc-sub { display: block; font-weight: 700; color: var(--acc); font-size: calc(var(--fs) - 1px); margin: 6px 0 2px; }
+
+/* ───── روابط المصادر الرسمية (القرار 3) ───── */
+.off-link { font-size: 13px; color: var(--acc); text-decoration: none; white-space: nowrap; }
+.off-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.off-link .ico-out { width: 13px; height: 13px; vertical-align: -2px; margin-right: 3px; }
+
 @media print {
+  .hl { -webkit-print-color-adjust: exact; print-color-adjust: exact; text-underline-offset: 5px; text-decoration-thickness: 1px; }
+  .hl-e { text-decoration: underline solid #8a8a8a; }
+  .hl-i { text-decoration: underline dotted #6a6a6a; }
+  .hl-r { text-decoration: underline wavy #6a6a6a; }
+  .hl-p { text-decoration: underline dashed #6a6a6a; }
+  .lgroup { border: 0; }
+  .lgroup > summary .toc-chev, .lg-count { display: none; }
   @page { size: A4; margin: 16mm 15mm 16mm; }
   :root { --fs: 12.5pt; --lh: 1.8; }
   body { background: #fff; color: #000; font-size: 11pt; }
